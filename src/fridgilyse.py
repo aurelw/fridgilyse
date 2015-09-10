@@ -29,7 +29,8 @@ import mosquitto
 mqtttopics = {
         "rawsamples" : "devlol/h19/fridge/rawsamples",
         "door" : "devlol/h19/fridge/door",
-        "bottlesout" : "devlol/h19/fridge/bottles/out"
+        "bottlesout" : "devlol/h19/fridge/bottles/out",
+        "bottlesin" : "devlol/h19/fridge/bottles/in"
 }
 
 
@@ -43,18 +44,20 @@ class FridgeAnalys:
         CLOSED_UNSTABLE = 4
 
 
-    def __init__(self):
+    def __init__(self, nsamples=10):
         self._cstate = self.State.START
 
         self._samples = []
-        self._nsamples = 10
-        self._stableDeviation = 0.015
 
+        self._nsamples = nsamples
+        self._stableDeviation = 0.015
         self._bottleWeight = 0.88
         self._maxBottleDeviation = 0.1
+
         self._currentWeight = -1.0
 
         self._bottlesOut = []
+        self._bottlesIn = []
 
 
     def onOpen(self):
@@ -97,11 +100,20 @@ class FridgeAnalys:
         diff = self._currentWeight - val
         if diff > 0:
             bottlesTaken = round(diff/self._bottleWeight)
-            dev =  abs(diff - bottlesTaken*self._bottleWeight)
+            dev = abs(diff - bottlesTaken*self._bottleWeight)
             if dev <= self._maxBottleDeviation:
                 if bottlesTaken > 0:
                     print("Bottles Taken: ", bottlesTaken)
                     self._bottlesOut.insert(0, bottlesTaken)
+        else:
+            # invert diff to a postiv value
+            diff *= -1
+            bottlesInserted = round(diff/self._bottlesWeight)
+            dev = abs(diff - bottlesInserted*self._bottlesWeight)
+            if dev <= self._maxBottleDeviation:
+                if bottlesInserted > 0:
+                    print("Bottles Inserted: ", bottlesInserted)
+                    self._bottlesIn.insert(0, bottlesInserted)
 
         pass
 
@@ -112,8 +124,11 @@ class FridgeAnalys:
 
     def publishBottlesOut(self, client):
         while len(self._bottlesOut) > 0:
-            bout = self._bottlesOut.pop()
-            client.publish(mqtttopics['bottlesout'], str(bout))
+            botout = self._bottlesOut.pop()
+            client.publish(mqtttopics['bottlesout'], str(botout))
+        while len(self._bottlesIn) > 0:
+            botbin = self._bottlesIn.pop()
+            client.publish(mqtttopics['bottlesin'], str(botin))
 
 
 
@@ -145,6 +160,7 @@ def on_disconnect(client, userdate, foo):
             # resubscribe to the topics
             client.subscribe(mqtttopics['rawsamples'])
             client.subscribe(mqtttopics['door'])
+            print("Reconnected to broker!")
         except:
             print("Faied to reconnect...")
             time.sleep(1)
@@ -158,7 +174,7 @@ def main():
     args = parser.parse_args() 
     brokerHost = args.host
 
-    fridgelyse =  FridgeAnalys()
+    fridgelyse =  FridgeAnalys(nsamples=4)
 
     ## setup MQTT client
     client = mosquitto.Mosquitto()
