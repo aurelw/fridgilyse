@@ -108,8 +108,8 @@ class FridgeAnalys:
         else:
             # invert diff to a postiv value
             diff *= -1
-            bottlesInserted = round(diff/self._bottlesWeight)
-            dev = abs(diff - bottlesInserted*self._bottlesWeight)
+            bottlesInserted = round(diff/self._bottleWeight)
+            dev = abs(diff - bottlesInserted*self._bottleWeight)
             if dev <= self._maxBottleDeviation:
                 if bottlesInserted > 0:
                     print("Bottles Inserted: ", bottlesInserted)
