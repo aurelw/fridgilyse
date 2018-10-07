@@ -1,0 +1,10 @@
+[Unit]
+Description=MQTT Fridgilyse Analysis Daemon
+
+[Service]
+ExecStart=/root/fridgilyse.py
+
+[Install]
+WantedBy=multi-user.target
+
+
