@@ -1,6 +1,3 @@
-#include <MQTT.h>
-#include <PubSubClient.h>
-
 /*
  * /dev/lol fridge
  * (C) 2015 by Christoph (doebi) Döberl
@@ -11,8 +8,8 @@
 #include <ESP8266WiFiMulti.h>
 #include <PubSubClient.h>
 
-#define DOUT  2
-#define CLK  4
+#define DOUT 2
+#define CLK 4
 
 int zero_factor = 8458217;
 float calibration_factor = 11600;
@@ -65,8 +62,6 @@ void setup() {
   Serial.begin(115200);
   delay(10);
 
-  //TODOD: read zero_factor from EEPROM
-
   wifiMulti.addAP("/dev/lol", "4dprinter");
 
   if(wifiMulti.run() == WL_CONNECTED) {
@@ -101,6 +96,6 @@ void loop() {
 
   // light
   check_light();
-  
+
   delay(1000);
 }
