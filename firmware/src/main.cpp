@@ -103,7 +103,7 @@ void loop() {
 
   //Serial.println("loop");
   //Serial.println(counter);
-  delay(100);
+  delay(1000);
 #if 1
   /* reconnect wifi */
   if(wifiMulti.run() == WL_CONNECTED) {
@@ -122,7 +122,8 @@ void loop() {
   if (client.connected()) {
     client.loop();
     scale.set_scale(calibration_factor);
-    //client.publish("devlol/h19/fridge/rawsamples", (String)scale.get_units(), true);
+    String scale_units = String(scale.get_units(), 3);
+    client.publish("devlol/h19/fridge/rawsamples", scale_units.c_str(), true);
   } else {
     if (client.connect("fridge", "devlol/h19/fridge/online", 0, true, "false")) {
       client.publish("devlol/h19/fridge/online", "true", true);
