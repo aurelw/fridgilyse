@@ -8,11 +8,15 @@
 #include <ESP8266WiFiMulti.h>
 #include <PubSubClient.h>
 
-#define DOUT  2
-#define CLK  4
+#define DOUT 2
+#define CLK 4
 
 int zero_factor = 8458217;
 float calibration_factor = 11600;
+int light;
+int light_treshold = 50;
+bool door_open = false;
+bool b;
 
 HX711 scale(DOUT, CLK);
 ESP8266WiFiMulti wifiMulti;
@@ -20,6 +24,28 @@ ESP8266WiFiMulti wifiMulti;
 IPAddress MQTTserver(158, 255, 212, 248);
 WiFiClient wclient;
 PubSubClient client(wclient, MQTTserver);
+
+void check_light() {
+  light = analogRead(A0);
+  Serial.println(light);
+  b = light > light_treshold;
+  for (int i = 0; i++; i < 10) {
+    delay(10);
+    light = analogRead(A0);
+    Serial.println(light);
+    if (b != (light > light_treshold)){
+      return;
+    }
+  }
+  if (b != door_open) {
+    door_open = b;
+    if (door_open) {
+      client.publish("devlol/h19/fridge/door", "OPEN");
+    } else {
+      client.publish("devlol/h19/fridge/door", "CLOSE");
+    }
+  }
+}
 
 void mqtt_callback(const MQTT::Publish& pub) {
   String topic = pub.topic();
@@ -35,8 +61,6 @@ void mqtt_callback(const MQTT::Publish& pub) {
 void setup() {
   Serial.begin(115200);
   delay(10);
-
-  //TODOD: read zero_factor from EEPROM
 
   wifiMulti.addAP("/dev/lol", "4dprinter");
 
@@ -69,5 +93,9 @@ void loop() {
       client.subscribe("devlol/h19/fridge/#");
     }
   }
+
+  // light
+  check_light();
+
   delay(1000);
 }

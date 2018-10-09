@@ -26,11 +26,16 @@ import time
 import mosquitto
 
 
+MQTT_BASE_TOPIC = "devlol/h19/fridge"
+
+
+
 mqtttopics = {
-        "rawsamples" : "devlol/h19/fridge/rawsamples",
-        "door" : "devlol/h19/fridge/door",
-        "bottlesout" : "devlol/h19/fridge/bottles/out",
-        "bottlesin" : "devlol/h19/fridge/bottles/in"
+        "rawsamples" : MQTT_BASE_TOPIC + "/rawsamples",
+        "door" : MQTT_BASE_TOPIC + "/door",
+        "bottlesout" : MQTT_BASE_TOPIC + "/bottles/out",
+        "bottlesin" : MQTT_BASE_TOPIC + "/bottles/in",
+        "fridgilysestatus" : MQTT_BASE_TOPIC + "/fridgilysestatus"
 }
 
 
@@ -168,6 +173,8 @@ def on_disconnect(client, userdate, foo):
             print("Faied to reconnect...")
             time.sleep(1)
 
+def on_connect(client,userdate,foo):
+    client.publish(mqtttopics['fridgilysestatus'],'online',qos=0,retain=True)
 
 def main():
 
@@ -183,7 +190,9 @@ def main():
     client = mosquitto.Mosquitto()
     client.on_message = on_message
     client.on_disconnect = on_disconnect
+    client.on_connect = on_connect
     client.user_data_set(fridgelyse)
+    client.will_set(mqtttopics['fridgilysestatus'],'offline',qos=0,retain=True)
     client.connect(brokerHost)
     client.subscribe(mqtttopics['rawsamples'])
     client.subscribe(mqtttopics['door'])
@@ -197,4 +206,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
