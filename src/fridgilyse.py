@@ -37,11 +37,11 @@ mqtttopics = {
 class FridgeAnalys:
 
     class State:
-        START = 0
-        INIT_WEIGHT = 1
-        CLOSED_STABLE = 2
-        OPENED = 3
-        CLOSED_UNSTABLE = 4
+        START = "START"
+        INIT_WEIGHT = "INIT"
+        CLOSED_STABLE = "CLOSED_STABLE"
+        OPENED = "OPENED"
+        CLOSED_UNSTABLE = "CLOSED_UNSTABLE"
 
 
     def __init__(self, nsamples=10):
@@ -105,6 +105,9 @@ class FridgeAnalys:
                 if bottlesTaken > 0:
                     print("Bottles Taken: ", bottlesTaken)
                     self._bottlesOut.insert(0, bottlesTaken)
+            else:
+                print("WARNING: Bottles Out with too much derivation.")
+
         else:
             # invert diff to a postiv value
             diff *= -1
@@ -114,8 +117,8 @@ class FridgeAnalys:
                 if bottlesInserted > 0:
                     print("Bottles Inserted: ", bottlesInserted)
                     self._bottlesIn.insert(0, bottlesInserted)
-
-        pass
+            else:
+                print("WARNING: Bottles In with too much derivation.")
 
 
     def _updateWeight(self, val):
@@ -127,7 +130,7 @@ class FridgeAnalys:
             botout = self._bottlesOut.pop()
             client.publish(mqtttopics['bottlesout'], str(botout))
         while len(self._bottlesIn) > 0:
-            botbin = self._bottlesIn.pop()
+            botin = self._bottlesIn.pop()
             client.publish(mqtttopics['bottlesin'], str(botin))
 
 
@@ -189,6 +192,7 @@ def main():
     while True:
         client.loop()
         fridgelyse.publishBottlesOut(client)
+        print(fridgelyse._cstate)
 
 
 if __name__ == "__main__":
